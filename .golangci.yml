@@ -1,0 +1,88 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golint
+    - gosec
+    - misspell
+    - revive
+    - unconvert
+    - unparam
+    - whitespace
+    - gocritic
+    - godot
+    - goerr113
+    - gomnd
+    - gomodguard
+    - goprintffuncname
+    - nolintlint
+    - rowserrcheck
+    - sqlclosecheck
+    - stylecheck
+
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/yourusername/samsara-risk-mvp)
+    skip-generated: true
+
+  gofumpt:
+    lang-version: "1.21"
+    extra-rules: true
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+
+  gosec:
+    exclude-generated: true
+
+  revive:
+    rules:
+      - name: exported
+        disabled: false
+
+  gomnd:
+    settings:
+      mnd:
+        checks:
+          - argument
+          - case
+          - condition
+          - operation
+          - return
+          - assign
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gomnd
+        - goerr113
+    - path: cmd/
+      linters:
+        - gomnd

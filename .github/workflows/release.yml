@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  GO_VERSION: '1.21'
+  NODE_VERSION: '18'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Get version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Build release artifacts
+      run: |
+        make build
+
+        # Create release archives
+        mkdir -p dist
+        tar -czf dist/samsara-risk-mvp-${{ steps.version.outputs.VERSION }}-linux-amd64.tar.gz bin/
+
+        # Build frontend
+        cd frontend && npm ci && npm run build
+        tar -czf ../dist/samsara-risk-frontend-${{ steps.version.outputs.VERSION }}.tar.gz dist/
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Simple changelog generation (enhance as needed)
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.VERSION }}
+        release_name: Release ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Changes
+          ${{ steps.changelog.outputs.CHANGELOG }}
+
+          ## Docker Images
+          - `samsara-risk-mvp/api:${{ steps.version.outputs.VERSION }}`
+          - `samsara-risk-mvp/risk-engine:${{ steps.version.outputs.VERSION }}`
+          - `samsara-risk-mvp/telemetry-ingest:${{ steps.version.outputs.VERSION }}`
+          - `samsara-risk-mvp/websocket:${{ steps.version.outputs.VERSION }}`
+          - `samsara-risk-mvp/frontend:${{ steps.version.outputs.VERSION }}`
+        draft: false
+        prerelease: false

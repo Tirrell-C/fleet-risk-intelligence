@@ -1,0 +1,10 @@
+go 1.21
+
+use (
+	.
+	./infrastructure
+	./services/api
+	./services/risk-engine
+	./services/telemetry-ingest
+	./services/websocket
+)
