@@ -32,3 +32,17 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  Fleet:
+    model: github.com/Tirrell-C/fleet-risk-intelligence/pkg/models.Fleet
+  Driver:
+    model: github.com/Tirrell-C/fleet-risk-intelligence/pkg/models.Driver
+  Vehicle:
+    model: github.com/Tirrell-C/fleet-risk-intelligence/pkg/models.Vehicle
+  TelemetryEvent:
+    model: github.com/Tirrell-C/fleet-risk-intelligence/pkg/models.TelemetryEvent
+  RiskEvent:
+    model: github.com/Tirrell-C/fleet-risk-intelligence/pkg/models.RiskEvent
+  Alert:
+    model: github.com/Tirrell-C/fleet-risk-intelligence/pkg/models.Alert
+  DriverScore:
+    model: github.com/Tirrell-C/fleet-risk-intelligence/pkg/models.DriverScore

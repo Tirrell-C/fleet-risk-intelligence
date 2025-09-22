@@ -3,11 +3,14 @@ package main
 import (
 	"net/http"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
 	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/server"
 	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/models"
+	"github.com/Tirrell-C/fleet-risk-intelligence/services/api/graph"
 )
 
 func main() {
@@ -17,7 +20,10 @@ func main() {
 		logrus.WithError(err).Fatal("Failed to initialize server")
 	}
 
-	// Add basic REST endpoints for now (GraphQL can be added later)
+	// Add GraphQL endpoint
+	setupGraphQL(baseServer)
+
+	// Add basic REST endpoints
 	setupRoutes(baseServer)
 
 	// Start server
@@ -27,6 +33,32 @@ func main() {
 
 	// Wait for shutdown
 	baseServer.WaitForShutdown()
+}
+
+func setupGraphQL(server *server.BaseServer) {
+	// Create GraphQL resolver with database access
+	resolver := &graph.Resolver{
+		DB:     server.DB,
+		Config: server.Config,
+	}
+
+	// Create GraphQL handler
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
+
+	// Add GraphQL endpoint
+	server.Router.POST("/graphql", func(c *gin.Context) {
+		srv.ServeHTTP(c.Writer, c.Request)
+	})
+
+	// Add GraphQL playground for development
+	if server.Config.Server.Env == "development" {
+		server.Router.GET("/playground", func(c *gin.Context) {
+			playground.Handler("GraphQL playground", "/graphql").ServeHTTP(c.Writer, c.Request)
+		})
+		logrus.Info("GraphQL playground available at /playground")
+	}
+
+	logrus.Info("GraphQL endpoint available at /graphql")
 }
 
 func setupRoutes(server *server.BaseServer) {
