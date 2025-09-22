@@ -27,7 +27,7 @@ type Vehicle struct {
 // Driver represents a vehicle driver
 type Driver struct {
 	ID          uint      `json:"id" gorm:"primaryKey"`
-	EmployeeID  string    `json:"employee_id" gorm:"uniqueIndex;size:100"`
+	EmployeeID  string    `json:"employee_id" gorm:"uniqueIndex:idx_drivers_employee_id;size:100"`
 	FirstName   string    `json:"first_name"`
 	LastName    string    `json:"last_name"`
 	Email       string    `json:"email" gorm:"uniqueIndex;size:255"`

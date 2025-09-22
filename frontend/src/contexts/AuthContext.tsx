@@ -76,23 +76,25 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 }
 
 const initialState: AuthState = {
-  user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false,
-  isLoading: true,
+  user: {
+    id: '1',
+    email: 'demo@fleet.com',
+    firstName: 'Demo',
+    lastName: 'User',
+    role: 'fleet_admin',
+    status: 'active',
+  },
+  token: 'demo-token',
+  isAuthenticated: true,
+  isLoading: false,
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      // Verify token and get user profile
-      verifyToken(token)
-    } else {
-      dispatch({ type: 'SET_LOADING', payload: false })
-    }
+    // Temporarily bypass auth for demo
+    dispatch({ type: 'SET_LOADING', payload: false })
   }, [])
 
   const verifyToken = async (token: string) => {

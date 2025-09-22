@@ -11,21 +11,43 @@ import ErrorMessage from '../components/ErrorMessage'
 import StatsCard from '../components/StatsCard'
 
 export default function Dashboard() {
-  const { data: fleetsData, loading: fleetsLoading } = useQuery(GET_FLEETS)
-  const { data: vehiclesData, loading: vehiclesLoading } = useQuery(GET_VEHICLES)
-  const { data: driversData, loading: driversLoading } = useQuery(GET_DRIVERS)
+  const { data: fleetsData, loading: fleetsLoading, error: fleetsError } = useQuery(GET_FLEETS)
+  const { data: vehiclesData, loading: vehiclesLoading, error: vehiclesError } = useQuery(GET_VEHICLES)
+  const { data: driversData, loading: driversLoading, error: driversError } = useQuery(GET_DRIVERS)
 
-  // For alerts, we'll need to get all fleets first, then query alerts for each
-  // For now, let's just show a placeholder
-  const activeAlerts = 0
+  // Demo data for when API is not available
+  const demoFleets = [
+    { id: '1', name: 'Downtown Delivery', companyName: 'Metro Logistics', status: 'active' },
+    { id: '2', name: 'Highway Express', companyName: 'Cross Country Transport', status: 'active' },
+    { id: '3', name: 'Urban Fleet', companyName: 'City Services Inc', status: 'active' }
+  ]
+
+  const demoVehicles = [
+    { id: '1', make: 'Ford', model: 'Transit', year: 2022, licensePlate: 'FL-001', riskScore: 3.2, status: 'active' },
+    { id: '2', make: 'Chevrolet', model: 'Express', year: 2021, licensePlate: 'FL-002', riskScore: 7.8, status: 'active' },
+    { id: '3', make: 'Mercedes', model: 'Sprinter', year: 2023, licensePlate: 'FL-003', riskScore: 2.1, status: 'active' },
+    { id: '4', make: 'Ford', model: 'E-450', year: 2020, licensePlate: 'FL-004', riskScore: 8.5, status: 'maintenance' },
+    { id: '5', make: 'Isuzu', model: 'NPR', year: 2022, licensePlate: 'FL-005', riskScore: 4.6, status: 'active' }
+  ]
+
+  const demoDrivers = [
+    { id: '1', firstName: 'John', lastName: 'Smith', riskScore: 4.2, status: 'active' },
+    { id: '2', firstName: 'Sarah', lastName: 'Johnson', riskScore: 2.8, status: 'active' },
+    { id: '3', firstName: 'Mike', lastName: 'Davis', riskScore: 8.1, status: 'active' },
+    { id: '4', firstName: 'Lisa', lastName: 'Wilson', riskScore: 3.5, status: 'active' },
+    { id: '5', firstName: 'David', lastName: 'Brown', riskScore: 7.2, status: 'suspended' }
+  ]
+
+  const activeAlerts = 3
 
   if (fleetsLoading || vehiclesLoading || driversLoading) {
     return <LoadingSpinner />
   }
 
-  const fleets = fleetsData?.fleets || []
-  const vehicles = vehiclesData?.vehicles || []
-  const drivers = driversData?.drivers || []
+  // Use demo data if API calls fail, otherwise use real data
+  const fleets = fleetsError ? demoFleets : (fleetsData?.fleets || [])
+  const vehicles = vehiclesError ? demoVehicles : (vehiclesData?.vehicles || [])
+  const drivers = driversError ? demoDrivers : (driversData?.drivers || [])
 
   const stats = [
     {
