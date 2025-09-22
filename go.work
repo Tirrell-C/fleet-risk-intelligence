@@ -4,6 +4,7 @@ use (
 	.
 	./infrastructure
 	./services/api
+	./services/auth
 	./services/risk-engine
 	./services/telemetry-ingest
 	./services/websocket

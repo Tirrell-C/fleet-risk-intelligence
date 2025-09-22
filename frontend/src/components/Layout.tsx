@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import {
   Bars3Icon,
   XMarkIcon,
@@ -9,6 +10,8 @@ import {
   ExclamationTriangleIcon,
   BellIcon,
   BuildingOfficeIcon,
+  UserCircleIcon,
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline'
 
 interface LayoutProps {
@@ -26,7 +29,14 @@ const navigation = [
 
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const location = useLocation()
+  const { user, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    setUserMenuOpen(false)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -137,6 +147,34 @@ export default function Layout({ children }: LayoutProps) {
               <button className="text-gray-400 hover:text-gray-500">
                 <BellIcon className="h-6 w-6" />
               </button>
+
+              {/* User menu */}
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <UserCircleIcon className="h-8 w-8 text-gray-400" />
+                </button>
+
+                {userMenuOpen && (
+                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                    <div className="py-1">
+                      <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                        <div className="font-medium">{user?.firstName} {user?.lastName}</div>
+                        <div className="text-gray-500">{user?.email}</div>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5" />
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

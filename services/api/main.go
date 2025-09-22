@@ -2,12 +2,14 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
+	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/auth"
 	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/server"
 	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/models"
 	"github.com/Tirrell-C/fleet-risk-intelligence/services/api/graph"
@@ -20,11 +22,20 @@ func main() {
 		logrus.WithError(err).Fatal("Failed to initialize server")
 	}
 
+	// Initialize JWT manager
+	jwtSecret := baseServer.Config.Server.JWTSecret
+	if jwtSecret == "" {
+		jwtSecret = "default-secret-change-in-production"
+		logrus.Warn("Using default JWT secret - change this in production!")
+	}
+	jwtManager := auth.NewJWTManager(jwtSecret, 24*time.Hour)
+	authMiddleware := auth.NewAuthMiddleware(jwtManager)
+
 	// Add GraphQL endpoint
-	setupGraphQL(baseServer)
+	setupGraphQL(baseServer, authMiddleware)
 
 	// Add basic REST endpoints
-	setupRoutes(baseServer)
+	setupRoutes(baseServer, authMiddleware)
 
 	// Start server
 	if err := baseServer.Start(baseServer.Config.Server.Port); err != nil {
@@ -35,7 +46,7 @@ func main() {
 	baseServer.WaitForShutdown()
 }
 
-func setupGraphQL(server *server.BaseServer) {
+func setupGraphQL(server *server.BaseServer, authMiddleware *auth.AuthMiddleware) {
 	// Create GraphQL resolver with database access
 	resolver := &graph.Resolver{
 		DB:     server.DB,
@@ -45,8 +56,8 @@ func setupGraphQL(server *server.BaseServer) {
 	// Create GraphQL handler
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 
-	// Add GraphQL endpoint
-	server.Router.POST("/graphql", func(c *gin.Context) {
+	// Add GraphQL endpoint with authentication
+	server.Router.POST("/graphql", authMiddleware.RequireAuth(), func(c *gin.Context) {
 		srv.ServeHTTP(c.Writer, c.Request)
 	})
 
@@ -61,8 +72,9 @@ func setupGraphQL(server *server.BaseServer) {
 	logrus.Info("GraphQL endpoint available at /graphql")
 }
 
-func setupRoutes(server *server.BaseServer) {
+func setupRoutes(server *server.BaseServer, authMiddleware *auth.AuthMiddleware) {
 	api := server.Router.Group("/api/v1")
+	api.Use(authMiddleware.RequireAuth())
 
 	// Vehicle endpoints
 	api.GET("/vehicles", getVehicles(server))

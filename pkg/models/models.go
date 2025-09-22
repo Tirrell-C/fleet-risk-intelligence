@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -123,6 +124,62 @@ type DriverScore struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
+// User represents system users with authentication
+type User struct {
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	Email     string    `json:"email" gorm:"uniqueIndex;size:255"`
+	Password  string    `json:"-" gorm:"size:255"` // Hidden from JSON serialization
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Role      string    `json:"role" gorm:"default:fleet_manager"` // super_admin, fleet_admin, fleet_manager, driver
+	Status    string    `json:"status" gorm:"default:active"`      // active, inactive, suspended
+	FleetIDs  string    `json:"-" gorm:"type:json"`                // JSON array of fleet IDs user has access to
+	LastLogin *time.Time `json:"last_login"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// BeforeCreate hook to hash password before saving
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	if u.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		u.Password = string(hashedPassword)
+	}
+	return nil
+}
+
+// BeforeUpdate hook to hash password on updates
+func (u *User) BeforeUpdate(tx *gorm.DB) error {
+	if tx.Statement.Changed("Password") && u.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		u.Password = string(hashedPassword)
+	}
+	return nil
+}
+
+// CheckPassword compares a plain text password with the hashed password
+func (u *User) CheckPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	return err == nil
+}
+
+// Session represents user sessions for tracking logins
+type Session struct {
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	UserID    uint      `json:"user_id"`
+	User      User      `json:"user"`
+	Token     string    `json:"token" gorm:"uniqueIndex;size:255"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 // Migrate runs the database migrations
 func Migrate(db *gorm.DB) error {
 	return db.AutoMigrate(
@@ -133,5 +190,7 @@ func Migrate(db *gorm.DB) error {
 		&RiskEvent{},
 		&Alert{},
 		&DriverScore{},
+		&User{},
+		&Session{},
 	)
 }

@@ -15,9 +15,10 @@ type Config struct {
 
 // ServerConfig holds server configuration
 type ServerConfig struct {
-	Port string
-	Host string
-	Env  string
+	Port      string
+	Host      string
+	Env       string
+	JWTSecret string
 }
 
 // DatabaseConfig holds database configuration
@@ -48,9 +49,10 @@ type FeatureFlags struct {
 func Load() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Port: getEnv("API_PORT", "8080"),
-			Host: getEnv("API_HOST", "0.0.0.0"),
-			Env:  getEnv("ENV", "development"),
+			Port:      getEnv("API_PORT", "8080"),
+			Host:      getEnv("API_HOST", "0.0.0.0"),
+			Env:       getEnv("ENV", "development"),
+			JWTSecret: getEnv("JWT_SECRET", ""),
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
