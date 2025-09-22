@@ -1,6 +1,6 @@
-module risk-engine
+module github.com/Tirrell-C/fleet-risk-intelligence/services/risk-engine
 
-go 1.21
+go 1.23
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5
@@ -10,3 +10,5 @@ require (
 	gorm.io/driver/mysql v1.5.2
 	gorm.io/gorm v1.25.5
 )
+
+replace github.com/Tirrell-C/fleet-risk-intelligence => ../../

@@ -1,6 +1,6 @@
 {
   "name": "Fleet Risk Intelligence MVP",
-  "image": "mcr.microsoft.com/devcontainers/go:1.21",
+  "image": "mcr.microsoft.com/devcontainers/go:1.23",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "18"
