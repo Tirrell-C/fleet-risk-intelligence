@@ -9,7 +9,9 @@ RUN apk add --no-cache git
 COPY go.mod go.sum ./
 COPY go.work go.work.sum ./
 COPY pkg/ pkg/
-COPY services/api/ services/api/
+# Copy all services (needed for go.work)
+COPY services/ services/
+COPY infrastructure/ infrastructure/
 
 # Download dependencies
 RUN go mod download
