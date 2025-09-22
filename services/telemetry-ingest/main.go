@@ -1,27 +1,25 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 
 	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/config"
-	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/database"
+	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/errors"
 	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/models"
+	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/server"
+	"github.com/Tirrell-C/fleet-risk-intelligence/pkg/validation"
 )
 
 type TelemetryHandler struct {
-	db     *database.DB
+	db     *gorm.DB
 	config *config.Config
 }
 
@@ -37,108 +35,50 @@ type TelemetryPayload struct {
 }
 
 func main() {
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		logrus.Info("No .env file found")
-	}
-
-	// Load configuration
-	cfg := config.Load()
-
-	// Setup logging
-	setupLogging(cfg.Server.Env)
-
-	// Connect to database
-	db, err := database.NewConnection(database.Config{
-		Host:     cfg.Database.Host,
-		Port:     cfg.Database.Port,
-		User:     cfg.Database.User,
-		Password: cfg.Database.Password,
-		Database: cfg.Database.Database,
-	})
+	// Initialize base server with common setup
+	baseServer, err := server.NewBaseServer("telemetry-ingest")
 	if err != nil {
-		logrus.WithError(err).Fatal("Failed to connect to database")
+		logrus.WithError(err).Fatal("Failed to initialize server")
 	}
 
 	handler := &TelemetryHandler{
-		db:     db,
-		config: cfg,
+		db:     baseServer.DB,
+		config: baseServer.Config,
 	}
 
-	// Setup Gin router
-	router := gin.New()
-	router.Use(gin.Logger(), gin.Recovery())
+	// Add error handling middleware
+	baseServer.Router.Use(errors.ErrorHandler())
 
-	// CORS middleware
-	router.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-		c.Next()
-	})
-
-	// Health check
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":    "healthy",
-			"service":   "telemetry-ingest",
-			"timestamp": time.Now(),
-		})
-	})
-
-	// Telemetry endpoints
-	router.POST("/telemetry", handler.IngestTelemetry)
-	router.POST("/telemetry/batch", handler.IngestBatchTelemetry)
+	// Telemetry endpoints with validation
+	baseServer.Router.POST("/telemetry",
+		validation.ValidateTelemetryPayload(),
+		validation.RequireCoordinates(),
+		handler.IngestTelemetry)
+	baseServer.Router.POST("/telemetry/batch", handler.IngestBatchTelemetry)
 
 	// Simulation endpoint for development
-	if cfg.Features.EnableTelemetrySimulation {
-		router.POST("/simulate/:vehicle_id", handler.SimulateTelemetry)
+	if baseServer.Config.Features.EnableTelemetrySimulation {
+		baseServer.Router.POST("/simulate/:vehicle_id",
+			validation.ValidateVehicleID(),
+			handler.SimulateTelemetry)
 		logrus.Info("Telemetry simulation enabled")
 	}
 
-	// Setup HTTP server
+	// Start server
 	port := getEnv("TELEMETRY_PORT", "8081")
-	server := &http.Server{
-		Addr:    ":" + port,
-		Handler: router,
+	if err := baseServer.Start(port); err != nil {
+		logrus.WithError(err).Fatal("Failed to start server")
 	}
 
-	// Start server in a goroutine
-	go func() {
-		logrus.WithField("port", port).Info("Starting telemetry ingestion service")
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logrus.WithError(err).Fatal("Failed to start server")
-		}
-	}()
-
-	// Wait for interrupt signal
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	logrus.Info("Shutting down server...")
-
-	// Graceful shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		logrus.WithError(err).Fatal("Server forced to shutdown")
-	}
-
-	logrus.Info("Server exited")
+	// Wait for shutdown
+	baseServer.WaitForShutdown()
 }
 
 // IngestTelemetry handles single telemetry event ingestion
 func (h *TelemetryHandler) IngestTelemetry(c *gin.Context) {
 	var payload TelemetryPayload
 	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		errors.LogAndAbort(c, errors.ValidationError("json_payload", "Invalid JSON payload: "+err.Error()))
 		return
 	}
 
@@ -155,13 +95,11 @@ func (h *TelemetryHandler) IngestTelemetry(c *gin.Context) {
 	}
 
 	if err := h.db.Create(&event).Error; err != nil {
-		logrus.WithError(err).Error("Failed to save telemetry event")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save telemetry event"})
+		errors.LogAndAbort(c, errors.TelemetryIngestionError(payload.VehicleID, err))
 		return
 	}
 
-	// TODO: Publish to Redis for real-time processing
-	h.publishToRedis(&event)
+	// Note: Real-time processing would be added here in production
 
 	c.JSON(http.StatusCreated, gin.H{
 		"id":        event.ID,
@@ -173,7 +111,12 @@ func (h *TelemetryHandler) IngestTelemetry(c *gin.Context) {
 func (h *TelemetryHandler) IngestBatchTelemetry(c *gin.Context) {
 	var payloads []TelemetryPayload
 	if err := c.ShouldBindJSON(&payloads); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		errors.LogAndAbort(c, errors.ValidationError("json_payload", "Invalid JSON batch payload: "+err.Error()))
+		return
+	}
+
+	if len(payloads) == 0 {
+		errors.LogAndAbort(c, errors.ValidationError("batch_size", "Batch cannot be empty"))
 		return
 	}
 
@@ -193,15 +136,13 @@ func (h *TelemetryHandler) IngestBatchTelemetry(c *gin.Context) {
 
 	// Batch insert
 	if err := h.db.CreateInBatches(&events, 100).Error; err != nil {
-		logrus.WithError(err).Error("Failed to save batch telemetry events")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save telemetry events"})
+		errors.LogAndAbort(c, errors.WrapDatabaseError("batch_telemetry_insert", err, map[string]interface{}{
+			"batch_size": len(events),
+		}))
 		return
 	}
 
-	// Publish events for real-time processing
-	for _, event := range events {
-		h.publishToRedis(&event)
-	}
+	// Note: Real-time processing would be added here in production
 
 	c.JSON(http.StatusCreated, gin.H{
 		"processed": len(events),
@@ -211,55 +152,45 @@ func (h *TelemetryHandler) IngestBatchTelemetry(c *gin.Context) {
 
 // SimulateTelemetry generates simulated telemetry data for development
 func (h *TelemetryHandler) SimulateTelemetry(c *gin.Context) {
-	vehicleID := c.Param("vehicle_id")
-	if vehicleID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "vehicle_id is required"})
+	// Get validated vehicle ID from middleware
+	vehicleID, exists := c.Get("vehicle_id")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "vehicle_id validation failed"})
 		return
 	}
 
 	// Generate simulated data
-	events := generateSimulatedTelemetry(vehicleID, 10)
+	events := generateSimulatedTelemetry(vehicleID.(uint), 10)
 
+	successCount := 0
 	for _, event := range events {
 		if err := h.db.Create(&event).Error; err != nil {
-			logrus.WithError(err).Error("Failed to save simulated telemetry")
+			logrus.WithError(err).WithField("vehicle_id", vehicleID).Error("Failed to save simulated telemetry event")
 			continue
 		}
-		h.publishToRedis(&event)
+		successCount++
+		// Note: Real-time processing would be added here in production
+	}
+
+	if successCount == 0 {
+		errors.LogAndAbort(c, errors.TelemetryIngestionError(vehicleID.(uint), fmt.Errorf("no events were successfully saved")))
+		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message":   "Simulated telemetry generated",
-		"events":    len(events),
-		"vehicle_id": vehicleID,
+		"message":         "Simulated telemetry generated",
+		"events_created":  successCount,
+		"total_attempted": len(events),
+		"vehicle_id":      vehicleID,
 	})
 }
 
-// publishToRedis publishes telemetry events to Redis for real-time processing
-func (h *TelemetryHandler) publishToRedis(event *models.TelemetryEvent) {
-	// TODO: Implement Redis publishing
-	// This would typically publish to a Redis stream or pub/sub channel
-	// for the risk engine to consume in real-time
-
-	data, _ := json.Marshal(event)
-	logrus.WithFields(logrus.Fields{
-		"vehicle_id": event.VehicleID,
-		"event_type": event.EventType,
-		"timestamp":  event.Timestamp,
-	}).Debug("Publishing telemetry event to Redis: " + string(data))
-}
 
 // generateSimulatedTelemetry creates realistic telemetry data for testing
-func generateSimulatedTelemetry(vehicleIDStr string, count int) []models.TelemetryEvent {
+func generateSimulatedTelemetry(vehicleID uint, count int) []models.TelemetryEvent {
 	// Simple simulation - in a real system this would be much more sophisticated
 	events := make([]models.TelemetryEvent, count)
 	baseTime := time.Now()
-
-	// Parse vehicle ID
-	var vehicleID uint = 1 // Default fallback
-	if id, err := parseUint(vehicleIDStr); err == nil {
-		vehicleID = id
-	}
 
 	for i := 0; i < count; i++ {
 		events[i] = models.TelemetryEvent{
@@ -276,19 +207,6 @@ func generateSimulatedTelemetry(vehicleIDStr string, count int) []models.Telemet
 	return events
 }
 
-func setupLogging(env string) {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-
-	if env == "development" {
-		logrus.SetLevel(logrus.DebugLevel)
-		logrus.SetFormatter(&logrus.TextFormatter{
-			FullTimestamp: true,
-			ForceColors:   true,
-		})
-	} else {
-		logrus.SetLevel(logrus.InfoLevel)
-	}
-}
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
@@ -302,12 +220,9 @@ func floatPtr(f float64) *float64 {
 }
 
 func parseUint(s string) (uint, error) {
-	// Simple uint parsing - in production use strconv.ParseUint
-	if s == "1" {
-		return 1, nil
+	val, err := strconv.ParseUint(s, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("invalid uint: %s", s)
 	}
-	if s == "2" {
-		return 2, nil
-	}
-	return 1, fmt.Errorf("invalid uint: %s", s)
+	return uint(val), nil
 }

@@ -8,7 +8,7 @@ on:
 
 env:
   GO_VERSION: '1.23'
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
 
 jobs:
   test-go:

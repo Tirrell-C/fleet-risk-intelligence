@@ -26,10 +26,10 @@ type Vehicle struct {
 // Driver represents a vehicle driver
 type Driver struct {
 	ID          uint      `json:"id" gorm:"primaryKey"`
-	EmployeeID  string    `json:"employee_id" gorm:"uniqueIndex"`
+	EmployeeID  string    `json:"employee_id" gorm:"uniqueIndex;size:100"`
 	FirstName   string    `json:"first_name"`
 	LastName    string    `json:"last_name"`
-	Email       string    `json:"email" gorm:"uniqueIndex"`
+	Email       string    `json:"email" gorm:"uniqueIndex;size:255"`
 	Phone       string    `json:"phone"`
 	LicenseNum  string    `json:"license_number"`
 	FleetID     uint      `json:"fleet_id"`
@@ -45,7 +45,7 @@ type Fleet struct {
 	ID          uint      `json:"id" gorm:"primaryKey"`
 	Name        string    `json:"name"`
 	CompanyName string    `json:"company_name"`
-	ContactEmail string   `json:"contact_email"`
+	ContactEmail string   `json:"contact_email" gorm:"size:255"`
 	Status      string    `json:"status" gorm:"default:active"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
