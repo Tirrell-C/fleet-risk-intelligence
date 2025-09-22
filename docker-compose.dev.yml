@@ -5,8 +5,8 @@ services:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: devpass
-      MYSQL_DATABASE: samsara_dev
-      MYSQL_USER: samsara
+      MYSQL_DATABASE: fleet_dev
+      MYSQL_USER: fleet
       MYSQL_PASSWORD: devpass
     ports:
       - "3306:3306"
@@ -37,9 +37,9 @@ services:
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_USER=samsara
+      - DB_USER=fleet
       - DB_PASSWORD=devpass
-      - DB_NAME=samsara_dev
+      - DB_NAME=fleet_dev
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - LOG_LEVEL=debug
@@ -58,9 +58,9 @@ services:
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_USER=samsara
+      - DB_USER=fleet
       - DB_PASSWORD=devpass
-      - DB_NAME=samsara_dev
+      - DB_NAME=fleet_dev
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - LOG_LEVEL=debug
@@ -79,9 +79,9 @@ services:
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_USER=samsara
+      - DB_USER=fleet
       - DB_PASSWORD=devpass
-      - DB_NAME=samsara_dev
+      - DB_NAME=fleet_dev
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - LOG_LEVEL=debug

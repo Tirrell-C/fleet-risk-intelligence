@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Setting up Samsara Risk MVP development environment..."
+echo "🚀 Setting up Fleet Risk Intelligence MVP development environment..."
 
 # Install Go tools
 echo "📦 Installing Go tools..."
@@ -33,4 +33,4 @@ sudo apt-get install -y jq make postgresql-client redis-tools
 mkdir -p .git/hooks
 
 echo "✅ Development environment setup complete!"
-echo "🎯 Ready to build the Samsara Risk MVP!"
+echo "🎯 Ready to build the Fleet Risk Intelligence MVP!"

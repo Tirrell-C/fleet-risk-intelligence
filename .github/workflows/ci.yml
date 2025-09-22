@@ -20,7 +20,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: testpass
-          MYSQL_DATABASE: samsara_test
+          MYSQL_DATABASE: fleet_test
         ports:
           - 3306:3306
         options: >-
@@ -69,7 +69,7 @@ jobs:
         DB_PORT: 3306
         DB_USER: root
         DB_PASSWORD: testpass
-        DB_NAME: samsara_test
+        DB_NAME: fleet_test
         REDIS_HOST: localhost
         REDIS_PORT: 6379
 

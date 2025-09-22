@@ -2,7 +2,7 @@
 
 # Variables
 DOCKER_REGISTRY ?= your-registry.com
-PROJECT_NAME = samsara-risk-mvp
+PROJECT_NAME = fleet-risk-intelligence
 VERSION ?= latest
 
 help: ## Show this help message

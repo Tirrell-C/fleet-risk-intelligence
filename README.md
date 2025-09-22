@@ -1,4 +1,4 @@
-# Samsara Risk Intelligence MVP
+# Fleet Risk Intelligence MVP
 
 A production-ready MVP showcasing AI-driven fleet risk detection and management, built with Go microservices, React/TypeScript frontend, and deployed on AWS using Pulumi infrastructure-as-code.
 

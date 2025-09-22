@@ -1,5 +1,5 @@
 {
-  "name": "Samsara Risk MVP",
+  "name": "Fleet Risk Intelligence MVP",
   "image": "mcr.microsoft.com/devcontainers/go:1.21",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {

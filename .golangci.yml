@@ -43,7 +43,7 @@ linters-settings:
     sections:
       - standard
       - default
-      - prefix(github.com/yourusername/samsara-risk-mvp)
+      - prefix(github.com/Tirrell-C/fleet-risk-intelligence)
     skip-generated: true
 
   gofumpt:

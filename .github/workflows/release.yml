@@ -39,11 +39,11 @@ jobs:
 
         # Create release archives
         mkdir -p dist
-        tar -czf dist/samsara-risk-mvp-${{ steps.version.outputs.VERSION }}-linux-amd64.tar.gz bin/
+        tar -czf dist/fleet-risk-intelligence-${{ steps.version.outputs.VERSION }}-linux-amd64.tar.gz bin/
 
         # Build frontend
         cd frontend && npm ci && npm run build
-        tar -czf ../dist/samsara-risk-frontend-${{ steps.version.outputs.VERSION }}.tar.gz dist/
+        tar -czf ../dist/fleet-risk-frontend-${{ steps.version.outputs.VERSION }}.tar.gz dist/
 
     - name: Generate changelog
       id: changelog
@@ -65,10 +65,10 @@ jobs:
           ${{ steps.changelog.outputs.CHANGELOG }}
 
           ## Docker Images
-          - `samsara-risk-mvp/api:${{ steps.version.outputs.VERSION }}`
-          - `samsara-risk-mvp/risk-engine:${{ steps.version.outputs.VERSION }}`
-          - `samsara-risk-mvp/telemetry-ingest:${{ steps.version.outputs.VERSION }}`
-          - `samsara-risk-mvp/websocket:${{ steps.version.outputs.VERSION }}`
-          - `samsara-risk-mvp/frontend:${{ steps.version.outputs.VERSION }}`
+          - `fleet-risk-intelligence/api:${{ steps.version.outputs.VERSION }}`
+          - `fleet-risk-intelligence/risk-engine:${{ steps.version.outputs.VERSION }}`
+          - `fleet-risk-intelligence/telemetry-ingest:${{ steps.version.outputs.VERSION }}`
+          - `fleet-risk-intelligence/websocket:${{ steps.version.outputs.VERSION }}`
+          - `fleet-risk-intelligence/frontend:${{ steps.version.outputs.VERSION }}`
         draft: false
         prerelease: false

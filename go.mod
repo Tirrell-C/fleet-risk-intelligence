@@ -1,4 +1,4 @@
-module github.com/yourusername/samsara-risk-mvp
+module github.com/Tirrell-C/fleet-risk-intelligence
 
 go 1.21
 
