@@ -1,3 +1,23 @@
+# Development stage
+FROM node:20-alpine AS development
+
+WORKDIR /app
+
+# Copy package files
+COPY frontend/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY frontend/ ./
+
+# Expose port for dev server
+EXPOSE 3000
+
+# Start development server
+CMD ["npm", "run", "dev"]
+
 # Build stage
 FROM node:20-alpine AS builder
 
@@ -15,8 +35,8 @@ COPY frontend/ ./
 # Build the application
 RUN npm run build
 
-# Runtime stage
-FROM nginx:alpine
+# Production stage
+FROM nginx:alpine AS production
 
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
