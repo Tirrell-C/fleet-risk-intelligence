@@ -1,6 +1,6 @@
-module api
+module github.com/Tirrell-C/fleet-risk-intelligence/services/api
 
-go 1.21
+go 1.23
 
 require (
 	github.com/99designs/gqlgen v0.17.40
@@ -14,3 +14,5 @@ require (
 	gorm.io/driver/mysql v1.5.2
 	gorm.io/gorm v1.25.5
 )
+
+replace github.com/Tirrell-C/fleet-risk-intelligence => ../../

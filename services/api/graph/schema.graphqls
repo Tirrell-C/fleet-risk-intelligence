@@ -1,0 +1,285 @@
+type Query {
+  # Fleet queries
+  fleets: [Fleet!]!
+  fleet(id: ID!): Fleet
+
+  # Vehicle queries
+  vehicles(fleetId: ID): [Vehicle!]!
+  vehicle(id: ID!): Vehicle
+
+  # Driver queries
+  drivers(fleetId: ID): [Driver!]!
+  driver(id: ID!): Driver
+
+  # Risk and telemetry queries
+  riskEvents(vehicleId: ID, driverId: ID, limit: Int = 50): [RiskEvent!]!
+  alerts(fleetId: ID!, status: AlertStatus): [Alert!]!
+  driverScores(fleetId: ID!): [DriverScore!]!
+
+  # Real-time data
+  liveVehicleData(vehicleId: ID!): VehicleData
+}
+
+type Mutation {
+  # Fleet management
+  createFleet(input: CreateFleetInput!): Fleet!
+  updateFleet(id: ID!, input: UpdateFleetInput!): Fleet!
+
+  # Vehicle management
+  createVehicle(input: CreateVehicleInput!): Vehicle!
+  updateVehicle(id: ID!, input: UpdateVehicleInput!): Vehicle!
+  assignDriver(vehicleId: ID!, driverId: ID!): Vehicle!
+
+  # Driver management
+  createDriver(input: CreateDriverInput!): Driver!
+  updateDriver(id: ID!, input: UpdateDriverInput!): Driver!
+
+  # Alert management
+  acknowledgeAlert(id: ID!): Alert!
+  dismissAlert(id: ID!): Alert!
+}
+
+type Subscription {
+  # Real-time updates
+  vehicleUpdates(vehicleId: ID!): VehicleData!
+  riskEventNotifications(fleetId: ID!): RiskEvent!
+  alertNotifications(fleetId: ID!): Alert!
+}
+
+# Core types
+type Fleet {
+  id: ID!
+  name: String!
+  companyName: String!
+  contactEmail: String!
+  status: String!
+  vehicles: [Vehicle!]!
+  drivers: [Driver!]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Vehicle {
+  id: ID!
+  vin: String!
+  make: String!
+  model: String!
+  year: Int!
+  licensePlate: String!
+  fleetId: ID!
+  fleet: Fleet!
+  driverId: ID
+  driver: Driver
+  status: VehicleStatus!
+  currentLocation: Location
+  lastTelemetry: TelemetryEvent
+  riskScore: Float!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Driver {
+  id: ID!
+  employeeId: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  phone: String!
+  licenseNumber: String!
+  fleetId: ID!
+  fleet: Fleet!
+  status: DriverStatus!
+  riskScore: Float!
+  currentVehicle: Vehicle
+  driverScore: DriverScore
+  createdAt: String!
+  updatedAt: String!
+}
+
+type TelemetryEvent {
+  id: ID!
+  vehicleId: ID!
+  vehicle: Vehicle!
+  eventType: String!
+  timestamp: String!
+  latitude: Float
+  longitude: Float
+  speed: Float
+  acceleration: Float
+  data: String
+  processedAt: String
+  createdAt: String!
+}
+
+type RiskEvent {
+  id: ID!
+  vehicleId: ID!
+  vehicle: Vehicle!
+  driverId: ID
+  driver: Driver
+  eventType: RiskEventType!
+  severity: RiskSeverity!
+  riskScore: Float!
+  timestamp: String!
+  latitude: Float
+  longitude: Float
+  description: String!
+  data: String
+  status: RiskEventStatus!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Alert {
+  id: ID!
+  fleetId: ID!
+  fleet: Fleet!
+  vehicleId: ID
+  vehicle: Vehicle
+  driverId: ID
+  driver: Driver
+  riskEventId: ID
+  riskEvent: RiskEvent
+  type: AlertType!
+  priority: AlertPriority!
+  title: String!
+  message: String!
+  status: AlertStatus!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type DriverScore {
+  id: ID!
+  driverId: ID!
+  driver: Driver!
+  overallScore: Float!
+  safetyScore: Float!
+  efficiencyScore: Float!
+  totalMiles: Float!
+  totalTrips: Int!
+  riskEvents: Int!
+  lastUpdated: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Location {
+  latitude: Float!
+  longitude: Float!
+  address: String
+}
+
+type VehicleData {
+  vehicle: Vehicle!
+  location: Location
+  speed: Float
+  heading: Float
+  engineStatus: String
+  fuelLevel: Float
+  lastUpdate: String!
+}
+
+# Enums
+enum VehicleStatus {
+  ACTIVE
+  MAINTENANCE
+  INACTIVE
+}
+
+enum DriverStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum RiskEventType {
+  SPEEDING
+  HARSH_BRAKING
+  RAPID_ACCELERATION
+  FATIGUE
+  DISTRACTED_DRIVING
+  AGGRESSIVE_DRIVING
+}
+
+enum RiskSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RiskEventStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum AlertType {
+  RISK
+  MAINTENANCE
+  SYSTEM
+}
+
+enum AlertPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  UNREAD
+  READ
+  DISMISSED
+}
+
+# Input types
+input CreateFleetInput {
+  name: String!
+  companyName: String!
+  contactEmail: String!
+}
+
+input UpdateFleetInput {
+  name: String
+  companyName: String
+  contactEmail: String
+  status: String
+}
+
+input CreateVehicleInput {
+  vin: String!
+  make: String!
+  model: String!
+  year: Int!
+  licensePlate: String!
+  fleetId: ID!
+}
+
+input UpdateVehicleInput {
+  make: String
+  model: String
+  year: Int
+  licensePlate: String
+  status: VehicleStatus
+}
+
+input CreateDriverInput {
+  employeeId: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  phone: String!
+  licenseNumber: String!
+  fleetId: ID!
+}
+
+input UpdateDriverInput {
+  firstName: String
+  lastName: String
+  email: String
+  phone: String
+  licenseNumber: String
+  status: DriverStatus
+}
