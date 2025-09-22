@@ -1,6 +1,8 @@
 # Fleet Risk Intelligence MVP
 
-A production-ready MVP showcasing AI-driven fleet risk detection and management, built with Go microservices, React/TypeScript frontend, and deployed on AWS using Pulumi infrastructure-as-code.
+A production-ready MVP showcasing AI-driven fleet risk detection and management, built with Go microservices, React/TypeScript frontend, and modern containerized architecture.
+
+> **🎯 Current Status**: Core implementation complete with working dashboard, authentication service, and demo mode enabled for immediate exploration.
 
 ## 🎯 Project Overview
 
@@ -9,8 +11,29 @@ This project demonstrates enterprise-level software engineering practices for Io
 - **Real-time telemetry processing** for vehicle safety monitoring
 - **AI-powered risk detection** with pattern analysis and scoring
 - **Scalable microservices architecture** using Go and GraphQL
-- **Production-ready infrastructure** deployed with Pulumi on AWS
-- **Modern frontend** built with React/TypeScript and real-time updates
+- **Modern containerized deployment** with Docker Compose
+- **Professional React/TypeScript frontend** with real-time capabilities
+
+## 🚦 Implementation Status
+
+### ✅ Fully Working
+- **React Dashboard**: Complete fleet management UI with demo data
+- **Authentication Service**: JWT-based auth with user management (Port 8084)
+- **Database Layer**: MySQL with all tables and relationships
+- **Risk Engine**: Go microservice for risk analysis (Port 8082)
+- **Infrastructure**: Docker containerization with health checks
+
+### 🟡 Partially Implemented
+- **GraphQL API**: Schema complete, version compatibility issue (Port 8080)
+- **Telemetry Ingest**: Built, minor constraint naming conflict (Port 8081)
+- **WebSocket Service**: Ready for real-time updates (Port 8083)
+
+### 🎯 Demo Features
+- **3 Sample Fleets**: Metro Logistics, Cross Country Transport, City Services Inc
+- **5 Demo Vehicles**: Ford Transit, Chevy Express, Mercedes Sprinter, etc.
+- **5 Demo Drivers**: Complete with risk scores and performance metrics
+- **Risk Analytics**: Color-coded dashboards with safety indicators
+- **Professional UI**: Modern design with full navigation between all sections
 
 ## 🏗️ Architecture
 
@@ -31,16 +54,38 @@ This project demonstrates enterprise-level software engineering practices for Io
                        └─────────────────┘    └─────────────────┘
 ```
 
-## 🚀 Quick Start with DevContainer
+## 🚀 Quick Start (Demo Mode)
 
-This project uses devcontainers for isolated, secure development:
+Experience the full fleet management dashboard immediately:
 
-1. **Open in VS Code with Dev Containers extension**
-2. **Rebuild and reopen in container** when prompted
-3. **Start development environment:**
-   ```bash
-   make dev
-   ```
+```bash
+# 1. Clone the repository
+git clone https://github.com/Tirrell-C/fleet-risk-intelligence.git
+cd fleet-risk-intelligence
+
+# 2. Start core services
+docker compose -f docker-compose.dev.yml up mysql redis auth frontend -d
+
+# 3. Open the dashboard
+open http://localhost:3000
+```
+
+**What you'll see**: Professional fleet management interface with demo data including 3 fleets, 5 vehicles, 5 drivers, risk analytics, and full navigation.
+
+## 🛠️ Full Development Setup
+
+For complete backend development with all microservices:
+
+```bash
+# Start all services
+docker compose -f docker-compose.dev.yml up --build
+
+# Services available:
+# - Frontend: http://localhost:3000
+# - Auth API: http://localhost:8084
+# - Main API: http://localhost:8080 (partial)
+# - Risk Engine: http://localhost:8082
+```
 
 ## 🛠️ Tech Stack
 

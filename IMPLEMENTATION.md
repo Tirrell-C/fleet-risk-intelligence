@@ -7,6 +7,28 @@
 **Tech Stack**: Go 1.24, React 18, TypeScript, GraphQL, MySQL, Redis, Docker
 **Architecture**: Microservices with event-driven communication
 
+## 🚦 Current System Status
+
+### ✅ Fully Operational Services
+- **Frontend Dashboard**: http://localhost:3000 (React app with demo data)
+- **Authentication Service**: Port 8084 (JWT auth, user management)
+- **Database Layer**: MySQL 8.0 (all tables migrated)
+- **Cache Layer**: Redis 7 (pub/sub ready)
+- **Risk Engine**: Port 8082 (risk analysis service)
+
+### 🟡 Partially Functional
+- **API Gateway**: Port 8080 (GraphQL version compatibility issue)
+- **Telemetry Ingest**: Port 8081 (constraint naming conflict)
+- **WebSocket Service**: Port 8083 (depends on API gateway)
+
+### 🎯 Demo Mode Enabled
+The frontend includes demo data and bypass authentication for easy exploration:
+- 3 sample fleets with realistic company data
+- 5 vehicles with risk scores and status indicators
+- 5 drivers with performance metrics
+- Risk analytics with color-coded warnings
+- Professional UI with navigation between all sections
+
 ## 🏗️ System Architecture
 
 ```

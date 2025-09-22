@@ -35,6 +35,44 @@ cd frontend && npm run dev                 # Terminal 3
 open http://localhost:3000
 ```
 
+## 🎯 Demo Mode (Recommended for First Look)
+
+The system includes a demo mode for immediate exploration without full backend setup:
+
+### Quick Demo Setup
+```bash
+# 1. Start core services only
+docker compose -f docker-compose.dev.yml up mysql redis auth frontend -d
+
+# 2. Open dashboard
+open http://localhost:3000
+```
+
+### What You'll See in Demo Mode
+- **Professional Dashboard**: Complete fleet management interface
+- **Sample Data**: 3 fleets, 5 vehicles, 5 drivers with realistic metrics
+- **Risk Analytics**: Color-coded risk scores and safety indicators
+- **Full Navigation**: Access all pages (Dashboard, Vehicles, Drivers, Fleets, etc.)
+- **Modern UI**: Tailwind CSS styling with responsive design
+
+### Demo Features
+- **Bypass Authentication**: No login required for exploration
+- **Fallback Data**: Shows demo data when API services aren't available
+- **All Pages Functional**: Navigate between all sections without backend dependency
+- **Realistic Metrics**: Proper risk scores, status indicators, company data
+
+### Switching Back to Full Mode
+To restore full authentication and backend integration:
+```typescript
+// In frontend/src/contexts/AuthContext.tsx, revert the initialState:
+const initialState: AuthState = {
+  user: null,
+  token: localStorage.getItem('token'),
+  isAuthenticated: false,
+  isLoading: true,
+}
+```
+
 ## 🛠️ Development Workflow
 
 ### Day-to-Day Development
